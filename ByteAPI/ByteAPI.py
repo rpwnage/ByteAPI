@@ -1,5 +1,7 @@
+from __future__ import annotations
 import requests
 import json
+from .Account import PublicProfile
 
 class AuthenticationError(Exception):
     def __init__(self, token):
@@ -77,45 +79,22 @@ class ByteAPI:
         res = self.rsession.post("https://api.byte.co/rebyte", headers={ "Authorization": self.token }, json={ "postID": str(post_id), "metadata": "{\"source\":\"feed:your_mix::collection:popularThisMonth\"}" })
         return handleResponseError(self, res)
 
-    def account(self, account_id):
+    def findAccount(self, account_id) -> PublicProfile:
         """Get information about a account by account_id"""
-        res = self.rsession.get("https://api.byte.co/account/id/" + str(account_id), headers={ "Authorization": self.token })
-        handleResponseError(self, res)
-        return res.json()["data"]
+        profile = PublicProfile(self.rsession, account_id, self.token)
+        return profile
 
-    def follow(self, account_id):
-        """Follow a account by account_id"""
-        res = self.rsession.put("https://api.byte.co/account/id/"+str(account_id)+"/follow", headers={ "Authorization": self.token })
-        return handleResponseError(self, res)
-
-    def unfollow(self, account_id):
-        """Unfollow a account by account_id"""
-        res = self.rsession.delete("https://api.byte.co/account/id/"+str(account_id)+"/follow", headers={ "Authorization": self.token })
-        return handleResponseError(self, res) 
-
-    def userRebytes(self, account_id):
-        """Get the Rebytes of a user by account_id""" 
-        res = self.rsession.get(("https://api.byte.co/account/id/"+str(account_id)+"/rebytes"), headers={ "Authorization": self.token })
-        handleResponseError(self, res)
-        return res.json()["data"]
-
-    def userPosts(self, account_id):
-        """Get the Posts of a user by account_id""" 
-        res = self.rsession.get(("https://api.byte.co/account/id/"+str(account_id)+"/posts"), headers={ "Authorization": self.token })
-        handleResponseError(self, res)
-        return res.json()["data"]
-
-    def changeUsername(self, username):
+    def changeUsername(self, username: str):
         """Change your own username"""
         res = self.rsession.put("https://api.byte.co/account/me", headers={ "Authorization": self.token }, json={ "username": str(username) })
         return handleResponseError(self, res)
 
-    def changeDisplayname(self, display_name):
+    def changeDisplayname(self, display_name: str):
         """Change your own displayname"""
         res = self.rsession.put("https://api.byte.co/account/me", headers={ "Authorization": self.token }, json={ "displayName": str(display_name) })
         return handleResponseError(self, res)
 
-    def changeColorScheme(self, color_scheme):
+    def changeColorScheme(self, color_scheme: int):
         """
         Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
         """
@@ -130,7 +109,7 @@ class ByteAPI:
         handleResponseError(self, res)
         return res.json()["data"]
 
-    def postComment(self, post_id, text):
+    def postComment(self, post_id, text: str):
         """Post a comment under a post by post_id with the contents of text"""
         res = self.rsession.post(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/comment"), headers={ "Authorization": self.token }, json={ "postID": str(post_id), "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "body": str(text)})
         handleResponseError(self, res)
@@ -151,7 +130,7 @@ class ByteAPI:
         res = self.rsession.delete(("https://api.byte.co/feedback/comment/id/"+str(comment_id)+"/feedback/like"), headers={ "Authorization": self.token })
         return handleResponseError(self, res)
 
-    def postCommentReply(self, comment_id, text):
+    def postCommentReply(self, comment_id, text: str):
         """Reply to a existing comment by comment_id"""
         res = self.rsession.post(("https://api.byte.co/feedback/comment/id/"+str(comment_id)+"/feedback/comment"), headers={ "Authorization": self.token }, json={ "postID": str(comment_id).split("-")[0], "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "body": str(text)})
         handleResponseError(self, res)
