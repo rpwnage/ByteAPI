@@ -1,7 +1,7 @@
 from __future__ import annotations
 import requests
 import json
-from .Account import PublicProfile
+from .PublicProfile import PublicProfile
 
 class AuthenticationError(Exception):
     def __init__(self, token):

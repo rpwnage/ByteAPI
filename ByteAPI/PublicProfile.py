@@ -4,20 +4,20 @@ class PublicProfile():
     """Returned when fetching a public profile using `ByteAPI.account(<Account ID>)`"""
     def __init__(self, session: requests.Session, user_id: str, token: str):
         try:
-            self.userData = session.get("https://api.byte.co/account/id/" + str(user_id), headers={ "Authorization": token }).json()["data"]
-            self.user_id = self.userData["id"]
-            self.username = self.userData["username"]
-            """Username of the target user"""
-            self.display_name = self.userData["displayName"]
-            """Displayname of the target user"""
-            self.avatar_url = self.userData["avatarURL"]
-            self.bio = self.userData["bio"]
-            self.is_following = self.userData["isFollowing"]
-            self.is_followed = self.userData["isFollowed"]
-            self.is_blocked = self.userData["isBlocked"]
-            self.can_message = self.userData["canMessage"]
-            self.__token = token
             self.__rsess = session
+            self.__token = token
+            self.user_data = self.__rsess.get("https://api.byte.co/account/id/" + str(user_id), headers={ "Authorization": self.__token }).json()["data"]
+            self.user_id = self.user_data["id"]
+            self.username = self.user_data["username"]
+            """Username of the target user"""
+            self.display_name = self.user_data["displayName"]
+            """Displayname of the target user"""
+            self.avatar_url = self.user_data["avatarURL"]
+            self.bio = self.user_data["bio"]
+            self.is_following = self.user_data["isFollowing"]
+            self.is_followed = self.user_data["isFollowed"]
+            self.is_blocked = self.user_data["isBlocked"]
+            self.can_message = self.user_data["canMessage"]
         except:
             raise Exception("Unable to find user (ID: "+str(user_id)+")")
 
