@@ -38,11 +38,16 @@ class APIError(Exception):
         super().__init__(str(message))
 
 def handleResponseError(self, response):
+    &#34;&#34;&#34;
+    This function checks the respoonse of a API request for potential errors
+    &#34;&#34;&#34;
     if response.status_code == 401:
         raise AuthenticationError(self.token)
     if &#34;success&#34; in response.json():
         if int(response.json()[&#34;success&#34;]) != 1:
             raise APIError(str(response.json()[&#34;error&#34;][&#34;message&#34;]))
+        if int(response.json()[&#34;success&#34;]) == 1:
+            return True
     return True
 
 class ByteAPI:
@@ -192,17 +197,22 @@ class ByteAPI:
 <span>def <span class="ident">handleResponseError</span></span>(<span>self, response)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>This function checks the respoonse of a API request for potential errors</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def handleResponseError(self, response):
+    &#34;&#34;&#34;
+    This function checks the respoonse of a API request for potential errors
+    &#34;&#34;&#34;
     if response.status_code == 401:
         raise AuthenticationError(self.token)
     if &#34;success&#34; in response.json():
         if int(response.json()[&#34;success&#34;]) != 1:
             raise APIError(str(response.json()[&#34;error&#34;][&#34;message&#34;]))
+        if int(response.json()[&#34;success&#34;]) == 1:
+            return True
     return True</code></pre>
 </details>
 </dd>
