@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name='Byte.py',
-        version='0.4',
+        version='0.5',
         description='A Python API Wrapper to interact with with the SocialMedia platform Byte.co',
         long_description="""
         # ByteAPI
@@ -16,7 +16,8 @@ setup(
         print(byteClient.username)
         ```
         # Documentation
-        for more information on how to use this module, please refer to the [Documentation](https://rpwnage.github.io/ByteAPI/)
+        for more information on how to use this module, please refer to the [Documentation](https://rpwnage.github.io/ByteAPI/). As of now the Byte.py API Wrapper supports most of the tasks available in the App.
+        We're currently working on improving the post creation system. Feel free to contribute to this project on [Github](https://github.com/RPwnage/ByteAPI).
         """,
         long_description_content_type='text/markdown',
         url='https://rpwnage.github.io/ByteAPI/',

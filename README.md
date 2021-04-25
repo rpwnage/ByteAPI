@@ -12,3 +12,4 @@ from ByteAPI import ByteAPI
 byteClient = ByteAPI(<Your Token>)
 print(byteClient.username)
 ```
+For a more detailed explaination of this module, please take a look at the [Documentation](https://rpwnage.github.io/ByteAPI)
