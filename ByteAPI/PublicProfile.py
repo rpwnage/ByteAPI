@@ -2,7 +2,7 @@ import requests
 
 class PublicProfile():
     """Returned when fetching a public profile using `ByteAPI.account(<Account ID>)`"""
-    def __init__(self, session: requests.Session, user_id: str, token: str):
+    def __init__(self, session: requests.Session, token: str, user_id: str):
         try:
             self.__rsess = session
             self.__token = token

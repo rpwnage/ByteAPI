@@ -69,7 +69,7 @@ class PublicPost:
             self.id = post_id
             self.type = int(self.post_data["type"])
             self.caption = str(self.post_data["caption"])
-            self.author = PublicProfile(self.__rsess, self.post_data["authorID"], self.__token)
+            self.author = PublicProfile(self.__rsess, self.__token, self.post_data["authorID"])
             self.curation_allowed = bool(self.post_data["allowCuration"])
             self.remix_allowed = bool(self.post_data["allowRemix"])
             self.date = int(self.post_data["date"])
