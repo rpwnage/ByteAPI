@@ -22,15 +22,34 @@
 <h1 class="title">Package <code>ByteAPI</code></h1>
 </header>
 <section id="section-intro">
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">__all__ = [&#34;PublicProfile&#34;, &#34;PublicPost&#34;, &#34;ByteAPI&#34;, &#34;Community&#34;, &#34;DraftPost&#34;, &#34;Conversation&#34;]
+
+from ByteAPI.ByteAPIClient import ByteAPI
+from ByteAPI.PublicProfile import PublicProfile
+from ByteAPI.Post import PublicPost, DraftPost
+from ByteAPI.Conversation import Conversation</code></pre>
+</details>
 </section>
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="ByteAPI.Account" href="Account.html">ByteAPI.Account</a></code></dt>
+<dt><code class="name"><a title="ByteAPI.ByteAPIClient" href="ByteAPIClient.html">ByteAPI.ByteAPIClient</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
-<dt><code class="name"><a title="ByteAPI.ByteAPI" href="ByteAPI.html">ByteAPI.ByteAPI</a></code></dt>
+<dt><code class="name"><a title="ByteAPI.Comment" href="Comment.html">ByteAPI.Comment</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="ByteAPI.Community" href="Community.html">ByteAPI.Community</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="ByteAPI.Post" href="Post.html">ByteAPI.Post</a></code></dt>
 <dd>
 <div class="desc"></div>
 </dd>
@@ -41,6 +60,724 @@
 <section>
 </section>
 <section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ByteAPI.ByteAPI"><code class="flex name class">
+<span>class <span class="ident">ByteAPI</span></span>
+<span>(</span><span>token)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a new ByteAPI Client instance from <code>token</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ByteAPI:
+    def __init__(self, token):
+        &#34;&#34;&#34;Create a new ByteAPI Client instance from `token`&#34;&#34;&#34;
+        self.__token = token
+        self.__rsess = requests.Session()
+        self.user_info = self.__accountInfo()
+        self.username = self.user_info[&#34;username&#34;]
+        &#34;&#34;&#34;Username of the Authenticated user&#34;&#34;&#34;
+        self.user_id = self.user_info[&#34;id&#34;]
+        &#34;&#34;&#34;UserID of the Authenticated user&#34;&#34;&#34;
+        self.following = self.__accountFollowing()
+        self.following_count = self.user_info[&#34;followingCount&#34;]
+        self.follower = self.__accountFollowing()
+        self.follower_count = self.user_info[&#34;followerCount&#34;]
+        self.loop_count = self.user_info[&#34;loopCount&#34;]
+        self.consumed_loops_count = self.user_info[&#34;loopsConsumedCount&#34;]
+        self.profile_backgroundColor = self.user_info[&#34;backgroundColor&#34;]
+        self.profile_foregroundColor = self.user_info[&#34;foregroundColor&#34;]
+        self.conversations = self.__conversations()
+
+    def __conversations(self):
+        ret = []
+        res = self.__rsess.post(&#34;https://api.byte.co/dm-get-conversations&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={}).json()
+        for conversation in res[&#34;data&#34;][&#34;conversations&#34;]:
+            ret.append(Conversation(self.__rsess, self.__token, conversation[&#34;id&#34;], conversation[&#34;messages&#34;], conversation[&#34;members&#34;]))
+        return ret
+
+    def __accountInfo(self):
+        res = self.__rsess.get(&#34;https://api.byte.co/account/me&#34;, headers={&#34;Authorization&#34;: self.__token})
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]
+
+    def __accountFollowing(self):
+        res = self.__rsess.get(&#34;https://api.byte.co/account/me/following&#34;, headers={&#34;Authorization&#34;: self.__token})
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]
+
+    def __accountFollowers(self):
+        res = self.__rsess.get(&#34;https://api.byte.co/account/me/followers&#34;, headers={&#34;Authorization&#34;: self.__token})
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]
+
+    def findAccount(self, account_id: str) -&gt; PublicProfile:
+        &#34;&#34;&#34;Get a `PublicProfile` object by account_id&#34;&#34;&#34;
+        profile = PublicProfile(self.__rsess, self.__token, account_id)
+        return profile
+
+    def findPost(self, post_id: str) -&gt; PublicPost:
+        &#34;&#34;&#34;Get a `PublicPost` object by post_id&#34;&#34;&#34;
+        post = PublicPost(self.__rsess, post_id, self.__token)
+        return post
+
+    def changeUsername(self, username: str):
+        &#34;&#34;&#34;Change your own username&#34;&#34;&#34;
+        res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;username&#34;: str(username) })
+        return handleResponseError(self, res)
+
+    def changeDisplayname(self, display_name: str):
+        &#34;&#34;&#34;Change your own displayname&#34;&#34;&#34;
+        res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;displayName&#34;: str(display_name) })
+        return handleResponseError(self, res)
+
+    def changeColorScheme(self, color_scheme: int):
+        &#34;&#34;&#34;
+        Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
+        &#34;&#34;&#34;
+        if int(color_scheme) in range(0, len(self.colorSchemes()[&#34;colors&#34;])):
+            res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;colorScheme&#34;: int(color_scheme) })
+            return handleResponseError(self, res)
+        raise APIError(&#34;Unknown Color scheme (&#34;+str(color_scheme)+&#34;)&#34;)
+
+    def colorSchemes(self):
+        &#34;&#34;&#34;Get a list of available color schemes which can be used to set your user profiles color scheme.&#34;&#34;&#34;
+        res = self.__rsess.get(&#34;https://api.byte.co/account/me/colors&#34;, headers={ &#34;Authorization&#34;: self.__token })
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]
+
+    def postComment(self, post_id, text: str):
+        &#34;&#34;&#34;Post a comment under a post by post_id with the contents of text&#34;&#34;&#34;
+        res = self.__rsess.post((&#34;https://api.byte.co/post/id/&#34;+str(post_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]
+
+    def deleteComment(self, comment_id):
+        &#34;&#34;&#34;Delete a existing comment by comment_id&#34;&#34;&#34;
+        res = self.__rsess.post((&#34;https://api.byte.co/feedback/comment/id/&#34; + str(comment_id)), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;commentID&#34;: str(comment_id) })
+        return handleResponseError(self, res)
+
+    def likeComment(self, comment_id):
+        &#34;&#34;&#34;Like a comment by comment_id&#34;&#34;&#34;
+        res = self.__rsess.put((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token })
+        return handleResponseError(self, res)
+
+    def dislikeComment(self, comment_id):
+        &#34;&#34;&#34;Dislike a comment by comment_id&#34;&#34;&#34;
+        res = self.__rsess.delete((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token })
+        return handleResponseError(self, res)
+
+    def postCommentReply(self, comment_id, text: str):
+        &#34;&#34;&#34;Reply to a existing comment by comment_id&#34;&#34;&#34;
+        res = self.__rsess.post((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(comment_id).split(&#34;-&#34;)[0], &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
+        handleResponseError(self, res)
+        return res.json()[&#34;data&#34;]</code></pre>
+</details>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ByteAPI.ByteAPI.user_id"><code class="name">var <span class="ident">user_id</span></code></dt>
+<dd>
+<div class="desc"><p>UserID of the Authenticated user</p></div>
+</dd>
+<dt id="ByteAPI.ByteAPI.username"><code class="name">var <span class="ident">username</span></code></dt>
+<dd>
+<div class="desc"><p>Username of the Authenticated user</p></div>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="ByteAPI.ByteAPI.changeColorScheme"><code class="name flex">
+<span>def <span class="ident">changeColorScheme</span></span>(<span>self, color_scheme: int)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Change your profiles color scheme. <code>color_scheme</code> has to be one of the existing color schemes which can be fetched with <code>colorSchemes(self)</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def changeColorScheme(self, color_scheme: int):
+    &#34;&#34;&#34;
+    Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
+    &#34;&#34;&#34;
+    if int(color_scheme) in range(0, len(self.colorSchemes()[&#34;colors&#34;])):
+        res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;colorScheme&#34;: int(color_scheme) })
+        return handleResponseError(self, res)
+    raise APIError(&#34;Unknown Color scheme (&#34;+str(color_scheme)+&#34;)&#34;)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.changeDisplayname"><code class="name flex">
+<span>def <span class="ident">changeDisplayname</span></span>(<span>self, display_name: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Change your own displayname</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def changeDisplayname(self, display_name: str):
+    &#34;&#34;&#34;Change your own displayname&#34;&#34;&#34;
+    res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;displayName&#34;: str(display_name) })
+    return handleResponseError(self, res)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.changeUsername"><code class="name flex">
+<span>def <span class="ident">changeUsername</span></span>(<span>self, username: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Change your own username</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def changeUsername(self, username: str):
+    &#34;&#34;&#34;Change your own username&#34;&#34;&#34;
+    res = self.__rsess.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;username&#34;: str(username) })
+    return handleResponseError(self, res)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.colorSchemes"><code class="name flex">
+<span>def <span class="ident">colorSchemes</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get a list of available color schemes which can be used to set your user profiles color scheme.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def colorSchemes(self):
+    &#34;&#34;&#34;Get a list of available color schemes which can be used to set your user profiles color scheme.&#34;&#34;&#34;
+    res = self.__rsess.get(&#34;https://api.byte.co/account/me/colors&#34;, headers={ &#34;Authorization&#34;: self.__token })
+    handleResponseError(self, res)
+    return res.json()[&#34;data&#34;]</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.deleteComment"><code class="name flex">
+<span>def <span class="ident">deleteComment</span></span>(<span>self, comment_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete a existing comment by comment_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deleteComment(self, comment_id):
+    &#34;&#34;&#34;Delete a existing comment by comment_id&#34;&#34;&#34;
+    res = self.__rsess.post((&#34;https://api.byte.co/feedback/comment/id/&#34; + str(comment_id)), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;commentID&#34;: str(comment_id) })
+    return handleResponseError(self, res)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.dislikeComment"><code class="name flex">
+<span>def <span class="ident">dislikeComment</span></span>(<span>self, comment_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Dislike a comment by comment_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dislikeComment(self, comment_id):
+    &#34;&#34;&#34;Dislike a comment by comment_id&#34;&#34;&#34;
+    res = self.__rsess.delete((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token })
+    return handleResponseError(self, res)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.findAccount"><code class="name flex">
+<span>def <span class="ident">findAccount</span></span>(<span>self, account_id: str) ‑> ByteAPI.PublicProfile.PublicProfile</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get a <code><a title="ByteAPI.PublicProfile" href="#ByteAPI.PublicProfile">PublicProfile</a></code> object by account_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def findAccount(self, account_id: str) -&gt; PublicProfile:
+    &#34;&#34;&#34;Get a `PublicProfile` object by account_id&#34;&#34;&#34;
+    profile = PublicProfile(self.__rsess, self.__token, account_id)
+    return profile</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.findPost"><code class="name flex">
+<span>def <span class="ident">findPost</span></span>(<span>self, post_id: str) ‑> <a title="ByteAPI.Post.PublicPost" href="Post.html#ByteAPI.Post.PublicPost">PublicPost</a></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get a <code><a title="ByteAPI.PublicPost" href="#ByteAPI.PublicPost">PublicPost</a></code> object by post_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def findPost(self, post_id: str) -&gt; PublicPost:
+    &#34;&#34;&#34;Get a `PublicPost` object by post_id&#34;&#34;&#34;
+    post = PublicPost(self.__rsess, post_id, self.__token)
+    return post</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.likeComment"><code class="name flex">
+<span>def <span class="ident">likeComment</span></span>(<span>self, comment_id)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Like a comment by comment_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def likeComment(self, comment_id):
+    &#34;&#34;&#34;Like a comment by comment_id&#34;&#34;&#34;
+    res = self.__rsess.put((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token })
+    return handleResponseError(self, res)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.postComment"><code class="name flex">
+<span>def <span class="ident">postComment</span></span>(<span>self, post_id, text: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Post a comment under a post by post_id with the contents of text</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def postComment(self, post_id, text: str):
+    &#34;&#34;&#34;Post a comment under a post by post_id with the contents of text&#34;&#34;&#34;
+    res = self.__rsess.post((&#34;https://api.byte.co/post/id/&#34;+str(post_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
+    handleResponseError(self, res)
+    return res.json()[&#34;data&#34;]</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.ByteAPI.postCommentReply"><code class="name flex">
+<span>def <span class="ident">postCommentReply</span></span>(<span>self, comment_id, text: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reply to a existing comment by comment_id</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def postCommentReply(self, comment_id, text: str):
+    &#34;&#34;&#34;Reply to a existing comment by comment_id&#34;&#34;&#34;
+    res = self.__rsess.post((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(comment_id).split(&#34;-&#34;)[0], &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
+    handleResponseError(self, res)
+    return res.json()[&#34;data&#34;]</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ByteAPI.Conversation"><code class="flex name class">
+<span>class <span class="ident">Conversation</span></span>
+<span>(</span><span>session: requests.sessions.Session, token: str, conversation_id: str, messages: list, members: list)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This represents a direct-message conversation between two users</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Conversation:
+    def __init__(self, session: requests.Session, token: str, conversation_id: str, messages: list, members: list):
+        &#34;&#34;&#34;This represents a direct-message conversation between two users&#34;&#34;&#34;
+        self.__token = token
+        self.__rsess = session
+        self.id = conversation_id
+        self.messages = []
+        for message in messages:
+            self.messages.append(Message(self.__rsess, self.__token, message[&#34;id&#34;], message[&#34;conversationID&#34;], message[&#34;authorID&#34;], message[&#34;body&#34;]))
+        self.members = []
+        for member in members:
+            self.members.append(PublicProfile(self.__rsess, self.__token, member))</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.DraftPost"><code class="flex name class">
+<span>class <span class="ident">DraftPost</span></span>
+<span>(</span><span>session: requests.sessions.Session, thumbnail_upload_id: str, video_upload_id: str, allow_remix: bool, caption: str, duration: float, token: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Used to create/publish posts within the API</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DraftPost:
+    def __init__(self, session: requests.Session, thumbnail_upload_id: str, video_upload_id: str, allow_remix: bool, caption: str, duration: float, token: str):
+        &#34;&#34;&#34;Used to create/publish posts within the API&#34;&#34;&#34;
+        try:
+            self.__rsess = session
+            self.__token = token
+            self.thumbnail_upload_id = thumbnail_upload_id
+            self.video_upload_id = video_upload_id
+            self.allow_remix = allow_remix
+            self.caption = caption
+            self.duration = duration
+        except Exception as err:
+            raise Exception(&#34;Unable to create draft (&#34;+str(err)+&#34;)&#34;)
+        
+    def publish(self):
+        &#34;&#34;&#34;Publishes the data saved in the Used DraftPost instance and returns `PublicPost` for the published Post&#34;&#34;&#34;
+        res = self.__rsess.post(&#34;https://api.byte.co/post&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={
+            &#34;thumbUploadID&#34;: self.thumbnail_upload_id, 
+            &#34;allowRemix&#34;: self.allow_remix,
+            &#34;soundTitle&#34;: None,
+            &#34;videoUploadID&#34;: self.video_upload_id,
+            &#34;composition&#34;: {
+                &#34;text&#34;: [],
+                &#34;footageTypes&#34;: [],
+                &#34;imageCount&#34;: 0,
+                &#34;clips&#34;: [
+                    {
+                        &#34;isFromCameraRoll&#34;: False,
+                        &#34;duration&#34;:self.duration,
+                        &#34;isFrontFacingCamera&#34;: False
+                    },
+                    {
+                        &#34;isFromCameraRoll&#34;: False,
+                        &#34;duration&#34;: self.duration,
+                        &#34;isFrontFacingCamera&#34;: False
+                    }
+                ]
+            },
+            &#34;caption&#34;: self.caption,
+            &#34;soundArtworkUploadID&#34;:None,
+            &#34;soundParentID&#34;:None
+        }).json()
+        
+        if res[&#34;success&#34;] == 1:
+            return PublicPost(self.__rsess, res[&#34;data&#34;][&#34;id&#34;], self.__token)</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ByteAPI.DraftPost.publish"><code class="name flex">
+<span>def <span class="ident">publish</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Publishes the data saved in the Used DraftPost instance and returns <code><a title="ByteAPI.PublicPost" href="#ByteAPI.PublicPost">PublicPost</a></code> for the published Post</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def publish(self):
+    &#34;&#34;&#34;Publishes the data saved in the Used DraftPost instance and returns `PublicPost` for the published Post&#34;&#34;&#34;
+    res = self.__rsess.post(&#34;https://api.byte.co/post&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={
+        &#34;thumbUploadID&#34;: self.thumbnail_upload_id, 
+        &#34;allowRemix&#34;: self.allow_remix,
+        &#34;soundTitle&#34;: None,
+        &#34;videoUploadID&#34;: self.video_upload_id,
+        &#34;composition&#34;: {
+            &#34;text&#34;: [],
+            &#34;footageTypes&#34;: [],
+            &#34;imageCount&#34;: 0,
+            &#34;clips&#34;: [
+                {
+                    &#34;isFromCameraRoll&#34;: False,
+                    &#34;duration&#34;:self.duration,
+                    &#34;isFrontFacingCamera&#34;: False
+                },
+                {
+                    &#34;isFromCameraRoll&#34;: False,
+                    &#34;duration&#34;: self.duration,
+                    &#34;isFrontFacingCamera&#34;: False
+                }
+            ]
+        },
+        &#34;caption&#34;: self.caption,
+        &#34;soundArtworkUploadID&#34;:None,
+        &#34;soundParentID&#34;:None
+    }).json()
+    
+    if res[&#34;success&#34;] == 1:
+        return PublicPost(self.__rsess, res[&#34;data&#34;][&#34;id&#34;], self.__token)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ByteAPI.PublicPost"><code class="flex name class">
+<span>class <span class="ident">PublicPost</span></span>
+<span>(</span><span>session: requests.sessions.Session, post_id: str, token: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returned when fetching posts</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PublicPost:
+    def __init__(self, session: requests.Session, post_id: str, token: str):
+        &#34;&#34;&#34;Returned when fetching posts&#34;&#34;&#34;
+        try:
+            self.__rsess = session
+            self.__token = token
+            self.post_data = self.__rsess.get(&#34;https://api.byte.co/post/id/&#34; + str(post_id), headers={ &#34;Authorization&#34;: self.__token }).json()[&#34;data&#34;]
+            self.id = post_id
+            self.type = int(self.post_data[&#34;type&#34;])
+            self.caption = str(self.post_data[&#34;caption&#34;])
+            self.author = PublicProfile(self.__rsess, self.__token, self.post_data[&#34;authorID&#34;])
+            self.curation_allowed = bool(self.post_data[&#34;allowCuration&#34;])
+            self.remix_allowed = bool(self.post_data[&#34;allowRemix&#34;])
+            self.date = int(self.post_data[&#34;date&#34;])
+            self.video_source = str(self.post_data[&#34;videoSrc&#34;])
+            self.thumbnail_source = str(self.post_data[&#34;thumbSrc&#34;])
+            self.comment_count = int(self.post_data[&#34;commentCount&#34;])
+            self.like_count = int(self.post_data[&#34;likeCount&#34;])
+            self.liked_by_me = bool(self.post_data[&#34;likedByMe&#34;])
+            self.loop_count = int(self.post_data[&#34;loopCount&#34;])
+            self.rebyted_by_me = bool(self.post_data[&#34;rebytedByMe&#34;])
+            self.rebyte_count = int(self.post_data[&#34;rebyteCount&#34;])
+            self.share_url = str(self.post_data[&#34;shareURL&#34;])
+            if &#34;animatedThumbnail&#34; in self.post_data:
+                self.animated_thumbnail_source = str(self.post_data[&#34;animatedThumbnail&#34;])
+            if &#34;watermarkedVideo&#34; in self.post_data:
+                self.watermarked_video_source = str(self.post_data[&#34;watermarkedVideo&#34;])
+            self.media = PostMedia(self.__rsess, self.id, self.__token)
+            if &#34;category&#34; in self.post_data:
+                self.category = str(self.post_data[&#34;category&#34;])
+                self.community = Community(self.__rsess, self.post_data[&#34;community&#34;][&#34;id&#34;], self.__token)
+        except Exception as err:
+            raise Exception(&#34;Unable to find post (ID: &#34;+str(post_id)+&#34;)&#34;)
+
+    def like(self):
+        &#34;&#34;&#34;Like the post&#34;&#34;&#34;
+        res = self.__rsess.put((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;_context&#34;: { &#34;isZenMode&#34;: False }, &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;postID&#34;: str(self.id) }).json()
+        if &#34;success&#34; in res:
+            if res[&#34;success&#34;] == 1:
+                self.__init__(self.__rsess, self.id, self.__token)
+
+    def dislike(self):
+        &#34;&#34;&#34;Dislike the post&#34;&#34;&#34;
+        res = self.__rsess.delete((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;_context&#34;: { &#34;isZenMode&#34;: False }, &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;postID&#34;: str(self.id) }).json()
+        if &#34;success&#34; in res:
+            if res[&#34;success&#34;] == 1:
+                self.__init__(self.__rsess, self.id, self.__token)
+
+    def similar(self):
+        &#34;&#34;&#34;Find similar posts&#34;&#34;&#34;
+        res = self.__rsess.post(&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/similar&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34; })
+        print(res.json()[&#34;data&#34;])
+
+    def rebyte(self):
+        &#34;&#34;&#34;Rebyte the post&#34;&#34;&#34;
+        res = self.__rsess.post(&#34;https://api.byte.co/rebyte&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(self.id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularThisMonth\&#34;}&#34; }).json()
+        if res[&#34;success&#34;] == 0:
+            if res[&#34;error&#34;][&#34;code&#34;] == 2002:
+                self.__init__(self.__rsess, self.id, self.__token)
+                return True
+
+    def unrebyte(self):
+        &#34;&#34;&#34;Un-rebyte the post&#34;&#34;&#34;
+        res = self.__rsess.delete((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/rebyte&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+        if res[&#34;success&#34;] == 1:
+            self.__init__(self.__rsess, self.id, self.__token)
+            return True</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ByteAPI.PublicPost.dislike"><code class="name flex">
+<span>def <span class="ident">dislike</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Dislike the post</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def dislike(self):
+    &#34;&#34;&#34;Dislike the post&#34;&#34;&#34;
+    res = self.__rsess.delete((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;_context&#34;: { &#34;isZenMode&#34;: False }, &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;postID&#34;: str(self.id) }).json()
+    if &#34;success&#34; in res:
+        if res[&#34;success&#34;] == 1:
+            self.__init__(self.__rsess, self.id, self.__token)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicPost.like"><code class="name flex">
+<span>def <span class="ident">like</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Like the post</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def like(self):
+    &#34;&#34;&#34;Like the post&#34;&#34;&#34;
+    res = self.__rsess.put((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;_context&#34;: { &#34;isZenMode&#34;: False }, &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;postID&#34;: str(self.id) }).json()
+    if &#34;success&#34; in res:
+        if res[&#34;success&#34;] == 1:
+            self.__init__(self.__rsess, self.id, self.__token)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicPost.rebyte"><code class="name flex">
+<span>def <span class="ident">rebyte</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rebyte the post</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rebyte(self):
+    &#34;&#34;&#34;Rebyte the post&#34;&#34;&#34;
+    res = self.__rsess.post(&#34;https://api.byte.co/rebyte&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;postID&#34;: str(self.id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularThisMonth\&#34;}&#34; }).json()
+    if res[&#34;success&#34;] == 0:
+        if res[&#34;error&#34;][&#34;code&#34;] == 2002:
+            self.__init__(self.__rsess, self.id, self.__token)
+            return True</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicPost.similar"><code class="name flex">
+<span>def <span class="ident">similar</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Find similar posts</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def similar(self):
+    &#34;&#34;&#34;Find similar posts&#34;&#34;&#34;
+    res = self.__rsess.post(&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/similar&#34;, headers={ &#34;Authorization&#34;: self.__token }, json={ &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34; })
+    print(res.json()[&#34;data&#34;])</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicPost.unrebyte"><code class="name flex">
+<span>def <span class="ident">unrebyte</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Un-rebyte the post</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unrebyte(self):
+    &#34;&#34;&#34;Un-rebyte the post&#34;&#34;&#34;
+    res = self.__rsess.delete((&#34;https://api.byte.co/post/id/&#34;+str(self.id)+&#34;/rebyte&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+    if res[&#34;success&#34;] == 1:
+        self.__init__(self.__rsess, self.id, self.__token)
+        return True</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="ByteAPI.PublicProfile"><code class="flex name class">
+<span>class <span class="ident">PublicProfile</span></span>
+<span>(</span><span>session: requests.sessions.Session, token: str, user_id: str)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returned when fetching a public profile using <code>ByteAPI.account(&lt;Account ID&gt;)</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class PublicProfile():
+    &#34;&#34;&#34;Returned when fetching a public profile using `ByteAPI.account(&lt;Account ID&gt;)`&#34;&#34;&#34;
+    def __init__(self, session: requests.Session, token: str, user_id: str):
+        try:
+            self.__rsess = session
+            self.__token = token
+            self.user_data = self.__rsess.get(&#34;https://api.byte.co/account/id/&#34; + str(user_id), headers={ &#34;Authorization&#34;: self.__token }).json()[&#34;data&#34;]
+            self.user_id = self.user_data[&#34;id&#34;]
+            self.username = self.user_data[&#34;username&#34;]
+            &#34;&#34;&#34;Username of the target user&#34;&#34;&#34;
+            self.display_name = self.user_data[&#34;displayName&#34;]
+            &#34;&#34;&#34;Displayname of the target user&#34;&#34;&#34;
+            if &#34;avatarURL&#34; in self.user_data:
+                self.avatar_url = self.user_data[&#34;avatarURL&#34;]
+                &#34;&#34;&#34;URL to the users avatar (if exists)&#34;&#34;&#34;
+            if &#34;bio&#34; in self.user_data:
+                self.bio = self.user_data[&#34;bio&#34;]
+                &#34;&#34;&#34;Biography of the user (if exists)&#34;&#34;&#34;
+            if &#34;preferences&#34; not in self.user_data:
+                self.is_following = self.user_data[&#34;isFollowing&#34;]
+                self.is_followed = self.user_data[&#34;isFollowed&#34;]
+                self.is_blocked = self.user_data[&#34;isBlocked&#34;]
+                self.can_message = self.user_data[&#34;canMessage&#34;]
+        except:
+            raise Exception(&#34;Unable to find user (ID: &#34;+str(user_id)+&#34;)&#34;)
+
+    def follow(self):
+        &#34;&#34;&#34;Follow the account&#34;&#34;&#34;
+        res = self.__rsess.put(&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.__token })
+        print(res.json())
+        self.__init__(self.__rsess,self.user_id, self.__token)
+
+    def unfollow(self):
+        &#34;&#34;&#34;Unfollow the account&#34;&#34;&#34;
+        res = self.__rsess.delete(&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.__token })
+        self.__init__(self.__rsess,self.user_id, self.__token)
+
+    def rebytes(self):
+        &#34;&#34;&#34;Get all rebytes of the account&#34;&#34;&#34;
+        res = self.__rsess.get((&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/rebytes&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+        return res[&#34;data&#34;]
+
+    def posts(self):
+        &#34;&#34;&#34;Get all posts of the account&#34;&#34;&#34;
+        res = self.__rsess.get((&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/posts&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+        return res[&#34;data&#34;]</code></pre>
+</details>
+<h3>Methods</h3>
+<dl>
+<dt id="ByteAPI.PublicProfile.follow"><code class="name flex">
+<span>def <span class="ident">follow</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Follow the account</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def follow(self):
+    &#34;&#34;&#34;Follow the account&#34;&#34;&#34;
+    res = self.__rsess.put(&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.__token })
+    print(res.json())
+    self.__init__(self.__rsess,self.user_id, self.__token)</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicProfile.posts"><code class="name flex">
+<span>def <span class="ident">posts</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get all posts of the account</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def posts(self):
+    &#34;&#34;&#34;Get all posts of the account&#34;&#34;&#34;
+    res = self.__rsess.get((&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/posts&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+    return res[&#34;data&#34;]</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicProfile.rebytes"><code class="name flex">
+<span>def <span class="ident">rebytes</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get all rebytes of the account</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rebytes(self):
+    &#34;&#34;&#34;Get all rebytes of the account&#34;&#34;&#34;
+    res = self.__rsess.get((&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/rebytes&#34;), headers={ &#34;Authorization&#34;: self.__token }).json()
+    return res[&#34;data&#34;]</code></pre>
+</details>
+</dd>
+<dt id="ByteAPI.PublicProfile.unfollow"><code class="name flex">
+<span>def <span class="ident">unfollow</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Unfollow the account</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def unfollow(self):
+    &#34;&#34;&#34;Unfollow the account&#34;&#34;&#34;
+    res = self.__rsess.delete(&#34;https://api.byte.co/account/id/&#34;+str(self.user_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.__token })
+    self.__init__(self.__rsess,self.user_id, self.__token)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+</dl>
 </section>
 </article>
 <nav id="sidebar">
@@ -51,8 +788,60 @@
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="ByteAPI.Account" href="Account.html">ByteAPI.Account</a></code></li>
-<li><code><a title="ByteAPI.ByteAPI" href="ByteAPI.html">ByteAPI.ByteAPI</a></code></li>
+<li><code><a title="ByteAPI.ByteAPIClient" href="ByteAPIClient.html">ByteAPI.ByteAPIClient</a></code></li>
+<li><code><a title="ByteAPI.Comment" href="Comment.html">ByteAPI.Comment</a></code></li>
+<li><code><a title="ByteAPI.Community" href="Community.html">ByteAPI.Community</a></code></li>
+<li><code><a title="ByteAPI.Post" href="Post.html">ByteAPI.Post</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ByteAPI.ByteAPI" href="#ByteAPI.ByteAPI">ByteAPI</a></code></h4>
+<ul class="two-column">
+<li><code><a title="ByteAPI.ByteAPI.changeColorScheme" href="#ByteAPI.ByteAPI.changeColorScheme">changeColorScheme</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.changeDisplayname" href="#ByteAPI.ByteAPI.changeDisplayname">changeDisplayname</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.changeUsername" href="#ByteAPI.ByteAPI.changeUsername">changeUsername</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.colorSchemes" href="#ByteAPI.ByteAPI.colorSchemes">colorSchemes</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.deleteComment" href="#ByteAPI.ByteAPI.deleteComment">deleteComment</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.dislikeComment" href="#ByteAPI.ByteAPI.dislikeComment">dislikeComment</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.findAccount" href="#ByteAPI.ByteAPI.findAccount">findAccount</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.findPost" href="#ByteAPI.ByteAPI.findPost">findPost</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.likeComment" href="#ByteAPI.ByteAPI.likeComment">likeComment</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.postComment" href="#ByteAPI.ByteAPI.postComment">postComment</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.postCommentReply" href="#ByteAPI.ByteAPI.postCommentReply">postCommentReply</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.user_id" href="#ByteAPI.ByteAPI.user_id">user_id</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.username" href="#ByteAPI.ByteAPI.username">username</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ByteAPI.Conversation" href="#ByteAPI.Conversation">Conversation</a></code></h4>
+</li>
+<li>
+<h4><code><a title="ByteAPI.DraftPost" href="#ByteAPI.DraftPost">DraftPost</a></code></h4>
+<ul class="">
+<li><code><a title="ByteAPI.DraftPost.publish" href="#ByteAPI.DraftPost.publish">publish</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ByteAPI.PublicPost" href="#ByteAPI.PublicPost">PublicPost</a></code></h4>
+<ul class="">
+<li><code><a title="ByteAPI.PublicPost.dislike" href="#ByteAPI.PublicPost.dislike">dislike</a></code></li>
+<li><code><a title="ByteAPI.PublicPost.like" href="#ByteAPI.PublicPost.like">like</a></code></li>
+<li><code><a title="ByteAPI.PublicPost.rebyte" href="#ByteAPI.PublicPost.rebyte">rebyte</a></code></li>
+<li><code><a title="ByteAPI.PublicPost.similar" href="#ByteAPI.PublicPost.similar">similar</a></code></li>
+<li><code><a title="ByteAPI.PublicPost.unrebyte" href="#ByteAPI.PublicPost.unrebyte">unrebyte</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="ByteAPI.PublicProfile" href="#ByteAPI.PublicProfile">PublicProfile</a></code></h4>
+<ul class="">
+<li><code><a title="ByteAPI.PublicProfile.follow" href="#ByteAPI.PublicProfile.follow">follow</a></code></li>
+<li><code><a title="ByteAPI.PublicProfile.posts" href="#ByteAPI.PublicProfile.posts">posts</a></code></li>
+<li><code><a title="ByteAPI.PublicProfile.rebytes" href="#ByteAPI.PublicProfile.rebytes">rebytes</a></code></li>
+<li><code><a title="ByteAPI.PublicProfile.unfollow" href="#ByteAPI.PublicProfile.unfollow">unfollow</a></code></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
