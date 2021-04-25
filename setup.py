@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
         name='Byte.py',
-        version='0.2',
+        version='0.3',
         description='A Python API Wrapper to interact with with the SocialMedia platform Byte.co',
         long_description="""
         # ByteAPI

@@ -1,4 +1,5 @@
 /tests
+.DS_Store
 # Byte-compiled / optimized / DLL files
 __pycache__/*
 __pycache__/
@@ -125,7 +126,7 @@ venv.bak/
 
 # mkdocs documentation
 /site
-*/.DS_Store
+.DS_Store
 
 # mypy
 .mypy_cache/

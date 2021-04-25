@@ -26,8 +26,10 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import requests
+<pre><code class="python">from __future__ import annotations
+import requests
 import json
+from .Account import PublicProfile
 
 class AuthenticationError(Exception):
     def __init__(self, token):
@@ -105,45 +107,22 @@ class ByteAPI:
         res = self.rsession.post(&#34;https://api.byte.co/rebyte&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularThisMonth\&#34;}&#34; })
         return handleResponseError(self, res)
 
-    def account(self, account_id):
+    def findAccount(self, account_id) -&gt; PublicProfile:
         &#34;&#34;&#34;Get information about a account by account_id&#34;&#34;&#34;
-        res = self.rsession.get(&#34;https://api.byte.co/account/id/&#34; + str(account_id), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
+        profile = PublicProfile(self.rsession, account_id, self.token)
+        return profile
 
-    def follow(self, account_id):
-        &#34;&#34;&#34;Follow a account by account_id&#34;&#34;&#34;
-        res = self.rsession.put(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-        return handleResponseError(self, res)
-
-    def unfollow(self, account_id):
-        &#34;&#34;&#34;Unfollow a account by account_id&#34;&#34;&#34;
-        res = self.rsession.delete(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-        return handleResponseError(self, res) 
-
-    def userRebytes(self, account_id):
-        &#34;&#34;&#34;Get the Rebytes of a user by account_id&#34;&#34;&#34; 
-        res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/rebytes&#34;), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
-
-    def userPosts(self, account_id):
-        &#34;&#34;&#34;Get the Posts of a user by account_id&#34;&#34;&#34; 
-        res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/posts&#34;), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
-
-    def changeUsername(self, username):
+    def changeUsername(self, username: str):
         &#34;&#34;&#34;Change your own username&#34;&#34;&#34;
         res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;username&#34;: str(username) })
         return handleResponseError(self, res)
 
-    def changeDisplayname(self, display_name):
+    def changeDisplayname(self, display_name: str):
         &#34;&#34;&#34;Change your own displayname&#34;&#34;&#34;
         res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;displayName&#34;: str(display_name) })
         return handleResponseError(self, res)
 
-    def changeColorScheme(self, color_scheme):
+    def changeColorScheme(self, color_scheme: int):
         &#34;&#34;&#34;
         Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
         &#34;&#34;&#34;
@@ -158,7 +137,7 @@ class ByteAPI:
         handleResponseError(self, res)
         return res.json()[&#34;data&#34;]
 
-    def postComment(self, post_id, text):
+    def postComment(self, post_id, text: str):
         &#34;&#34;&#34;Post a comment under a post by post_id with the contents of text&#34;&#34;&#34;
         res = self.rsession.post((&#34;https://api.byte.co/post/id/&#34;+str(post_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
         handleResponseError(self, res)
@@ -179,7 +158,7 @@ class ByteAPI:
         res = self.rsession.delete((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.token })
         return handleResponseError(self, res)
 
-    def postCommentReply(self, comment_id, text):
+    def postCommentReply(self, comment_id, text: str):
         &#34;&#34;&#34;Reply to a existing comment by comment_id&#34;&#34;&#34;
         res = self.rsession.post((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(comment_id).split(&#34;-&#34;)[0], &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
         handleResponseError(self, res)
@@ -326,45 +305,22 @@ class ByteAPI:
         res = self.rsession.post(&#34;https://api.byte.co/rebyte&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularThisMonth\&#34;}&#34; })
         return handleResponseError(self, res)
 
-    def account(self, account_id):
+    def findAccount(self, account_id) -&gt; PublicProfile:
         &#34;&#34;&#34;Get information about a account by account_id&#34;&#34;&#34;
-        res = self.rsession.get(&#34;https://api.byte.co/account/id/&#34; + str(account_id), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
+        profile = PublicProfile(self.rsession, account_id, self.token)
+        return profile
 
-    def follow(self, account_id):
-        &#34;&#34;&#34;Follow a account by account_id&#34;&#34;&#34;
-        res = self.rsession.put(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-        return handleResponseError(self, res)
-
-    def unfollow(self, account_id):
-        &#34;&#34;&#34;Unfollow a account by account_id&#34;&#34;&#34;
-        res = self.rsession.delete(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-        return handleResponseError(self, res) 
-
-    def userRebytes(self, account_id):
-        &#34;&#34;&#34;Get the Rebytes of a user by account_id&#34;&#34;&#34; 
-        res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/rebytes&#34;), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
-
-    def userPosts(self, account_id):
-        &#34;&#34;&#34;Get the Posts of a user by account_id&#34;&#34;&#34; 
-        res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/posts&#34;), headers={ &#34;Authorization&#34;: self.token })
-        handleResponseError(self, res)
-        return res.json()[&#34;data&#34;]
-
-    def changeUsername(self, username):
+    def changeUsername(self, username: str):
         &#34;&#34;&#34;Change your own username&#34;&#34;&#34;
         res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;username&#34;: str(username) })
         return handleResponseError(self, res)
 
-    def changeDisplayname(self, display_name):
+    def changeDisplayname(self, display_name: str):
         &#34;&#34;&#34;Change your own displayname&#34;&#34;&#34;
         res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;displayName&#34;: str(display_name) })
         return handleResponseError(self, res)
 
-    def changeColorScheme(self, color_scheme):
+    def changeColorScheme(self, color_scheme: int):
         &#34;&#34;&#34;
         Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
         &#34;&#34;&#34;
@@ -379,7 +335,7 @@ class ByteAPI:
         handleResponseError(self, res)
         return res.json()[&#34;data&#34;]
 
-    def postComment(self, post_id, text):
+    def postComment(self, post_id, text: str):
         &#34;&#34;&#34;Post a comment under a post by post_id with the contents of text&#34;&#34;&#34;
         res = self.rsession.post((&#34;https://api.byte.co/post/id/&#34;+str(post_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
         handleResponseError(self, res)
@@ -400,7 +356,7 @@ class ByteAPI:
         res = self.rsession.delete((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/like&#34;), headers={ &#34;Authorization&#34;: self.token })
         return handleResponseError(self, res)
 
-    def postCommentReply(self, comment_id, text):
+    def postCommentReply(self, comment_id, text: str):
         &#34;&#34;&#34;Reply to a existing comment by comment_id&#34;&#34;&#34;
         res = self.rsession.post((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(comment_id).split(&#34;-&#34;)[0], &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
         handleResponseError(self, res)
@@ -419,24 +375,8 @@ class ByteAPI:
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="ByteAPI.ByteAPI.ByteAPI.account"><code class="name flex">
-<span>def <span class="ident">account</span></span>(<span>self, account_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Get information about a account by account_id</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def account(self, account_id):
-    &#34;&#34;&#34;Get information about a account by account_id&#34;&#34;&#34;
-    res = self.rsession.get(&#34;https://api.byte.co/account/id/&#34; + str(account_id), headers={ &#34;Authorization&#34;: self.token })
-    handleResponseError(self, res)
-    return res.json()[&#34;data&#34;]</code></pre>
-</details>
-</dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.changeColorScheme"><code class="name flex">
-<span>def <span class="ident">changeColorScheme</span></span>(<span>self, color_scheme)</span>
+<span>def <span class="ident">changeColorScheme</span></span>(<span>self, color_scheme: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Change your profiles color scheme. <code>color_scheme</code> has to be one of the existing color schemes which can be fetched with <code>colorSchemes(self)</code></p></div>
@@ -444,7 +384,7 @@ class ByteAPI:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def changeColorScheme(self, color_scheme):
+<pre><code class="python">def changeColorScheme(self, color_scheme: int):
     &#34;&#34;&#34;
     Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
     &#34;&#34;&#34;
@@ -455,7 +395,7 @@ class ByteAPI:
 </details>
 </dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.changeDisplayname"><code class="name flex">
-<span>def <span class="ident">changeDisplayname</span></span>(<span>self, display_name)</span>
+<span>def <span class="ident">changeDisplayname</span></span>(<span>self, display_name: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Change your own displayname</p></div>
@@ -463,14 +403,14 @@ class ByteAPI:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def changeDisplayname(self, display_name):
+<pre><code class="python">def changeDisplayname(self, display_name: str):
     &#34;&#34;&#34;Change your own displayname&#34;&#34;&#34;
     res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;displayName&#34;: str(display_name) })
     return handleResponseError(self, res)</code></pre>
 </details>
 </dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.changeUsername"><code class="name flex">
-<span>def <span class="ident">changeUsername</span></span>(<span>self, username)</span>
+<span>def <span class="ident">changeUsername</span></span>(<span>self, username: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Change your own username</p></div>
@@ -478,7 +418,7 @@ class ByteAPI:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def changeUsername(self, username):
+<pre><code class="python">def changeUsername(self, username: str):
     &#34;&#34;&#34;Change your own username&#34;&#34;&#34;
     res = self.rsession.put(&#34;https://api.byte.co/account/me&#34;, headers={ &#34;Authorization&#34;: self.token }, json={ &#34;username&#34;: str(username) })
     return handleResponseError(self, res)</code></pre>
@@ -545,19 +485,19 @@ class ByteAPI:
     return handleResponseError(self, res)</code></pre>
 </details>
 </dd>
-<dt id="ByteAPI.ByteAPI.ByteAPI.follow"><code class="name flex">
-<span>def <span class="ident">follow</span></span>(<span>self, account_id)</span>
+<dt id="ByteAPI.ByteAPI.ByteAPI.findAccount"><code class="name flex">
+<span>def <span class="ident">findAccount</span></span>(<span>self, account_id) ‑> <a title="ByteAPI.Account.PublicProfile" href="Account.html#ByteAPI.Account.PublicProfile">PublicProfile</a></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Follow a account by account_id</p></div>
+<div class="desc"><p>Get information about a account by account_id</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def follow(self, account_id):
-    &#34;&#34;&#34;Follow a account by account_id&#34;&#34;&#34;
-    res = self.rsession.put(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-    return handleResponseError(self, res)</code></pre>
+<pre><code class="python">def findAccount(self, account_id) -&gt; PublicProfile:
+    &#34;&#34;&#34;Get information about a account by account_id&#34;&#34;&#34;
+    profile = PublicProfile(self.rsession, account_id, self.token)
+    return profile</code></pre>
 </details>
 </dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.likeComment"><code class="name flex">
@@ -591,7 +531,7 @@ class ByteAPI:
 </details>
 </dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.postComment"><code class="name flex">
-<span>def <span class="ident">postComment</span></span>(<span>self, post_id, text)</span>
+<span>def <span class="ident">postComment</span></span>(<span>self, post_id, text: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Post a comment under a post by post_id with the contents of text</p></div>
@@ -599,7 +539,7 @@ class ByteAPI:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def postComment(self, post_id, text):
+<pre><code class="python">def postComment(self, post_id, text: str):
     &#34;&#34;&#34;Post a comment under a post by post_id with the contents of text&#34;&#34;&#34;
     res = self.rsession.post((&#34;https://api.byte.co/post/id/&#34;+str(post_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(post_id), &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
     handleResponseError(self, res)
@@ -607,7 +547,7 @@ class ByteAPI:
 </details>
 </dd>
 <dt id="ByteAPI.ByteAPI.ByteAPI.postCommentReply"><code class="name flex">
-<span>def <span class="ident">postCommentReply</span></span>(<span>self, comment_id, text)</span>
+<span>def <span class="ident">postCommentReply</span></span>(<span>self, comment_id, text: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Reply to a existing comment by comment_id</p></div>
@@ -615,7 +555,7 @@ class ByteAPI:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def postCommentReply(self, comment_id, text):
+<pre><code class="python">def postCommentReply(self, comment_id, text: str):
     &#34;&#34;&#34;Reply to a existing comment by comment_id&#34;&#34;&#34;
     res = self.rsession.post((&#34;https://api.byte.co/feedback/comment/id/&#34;+str(comment_id)+&#34;/feedback/comment&#34;), headers={ &#34;Authorization&#34;: self.token }, json={ &#34;postID&#34;: str(comment_id).split(&#34;-&#34;)[0], &#34;metadata&#34;: &#34;{\&#34;source\&#34;:\&#34;feed:your_mix::collection:popularNow\&#34;}&#34;, &#34;body&#34;: str(text)})
     handleResponseError(self, res)
@@ -653,53 +593,6 @@ class ByteAPI:
     return res.json()[&#34;data&#34;]</code></pre>
 </details>
 </dd>
-<dt id="ByteAPI.ByteAPI.ByteAPI.unfollow"><code class="name flex">
-<span>def <span class="ident">unfollow</span></span>(<span>self, account_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Unfollow a account by account_id</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def unfollow(self, account_id):
-    &#34;&#34;&#34;Unfollow a account by account_id&#34;&#34;&#34;
-    res = self.rsession.delete(&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/follow&#34;, headers={ &#34;Authorization&#34;: self.token })
-    return handleResponseError(self, res) </code></pre>
-</details>
-</dd>
-<dt id="ByteAPI.ByteAPI.ByteAPI.userPosts"><code class="name flex">
-<span>def <span class="ident">userPosts</span></span>(<span>self, account_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Get the Posts of a user by account_id</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def userPosts(self, account_id):
-    &#34;&#34;&#34;Get the Posts of a user by account_id&#34;&#34;&#34; 
-    res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/posts&#34;), headers={ &#34;Authorization&#34;: self.token })
-    handleResponseError(self, res)
-    return res.json()[&#34;data&#34;]</code></pre>
-</details>
-</dd>
-<dt id="ByteAPI.ByteAPI.ByteAPI.userRebytes"><code class="name flex">
-<span>def <span class="ident">userRebytes</span></span>(<span>self, account_id)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Get the Rebytes of a user by account_id</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def userRebytes(self, account_id):
-    &#34;&#34;&#34;Get the Rebytes of a user by account_id&#34;&#34;&#34; 
-    res = self.rsession.get((&#34;https://api.byte.co/account/id/&#34;+str(account_id)+&#34;/rebytes&#34;), headers={ &#34;Authorization&#34;: self.token })
-    handleResponseError(self, res)
-    return res.json()[&#34;data&#34;]</code></pre>
-</details>
-</dd>
 </dl>
 </dd>
 </dl>
@@ -732,7 +625,6 @@ class ByteAPI:
 <li>
 <h4><code><a title="ByteAPI.ByteAPI.ByteAPI" href="#ByteAPI.ByteAPI.ByteAPI">ByteAPI</a></code></h4>
 <ul class="two-column">
-<li><code><a title="ByteAPI.ByteAPI.ByteAPI.account" href="#ByteAPI.ByteAPI.ByteAPI.account">account</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.changeColorScheme" href="#ByteAPI.ByteAPI.ByteAPI.changeColorScheme">changeColorScheme</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.changeDisplayname" href="#ByteAPI.ByteAPI.ByteAPI.changeDisplayname">changeDisplayname</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.changeUsername" href="#ByteAPI.ByteAPI.ByteAPI.changeUsername">changeUsername</a></code></li>
@@ -740,16 +632,13 @@ class ByteAPI:
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.deleteComment" href="#ByteAPI.ByteAPI.ByteAPI.deleteComment">deleteComment</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.dislikeComment" href="#ByteAPI.ByteAPI.ByteAPI.dislikeComment">dislikeComment</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.dislikePost" href="#ByteAPI.ByteAPI.ByteAPI.dislikePost">dislikePost</a></code></li>
-<li><code><a title="ByteAPI.ByteAPI.ByteAPI.follow" href="#ByteAPI.ByteAPI.ByteAPI.follow">follow</a></code></li>
+<li><code><a title="ByteAPI.ByteAPI.ByteAPI.findAccount" href="#ByteAPI.ByteAPI.ByteAPI.findAccount">findAccount</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.likeComment" href="#ByteAPI.ByteAPI.ByteAPI.likeComment">likeComment</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.likePost" href="#ByteAPI.ByteAPI.ByteAPI.likePost">likePost</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.postComment" href="#ByteAPI.ByteAPI.ByteAPI.postComment">postComment</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.postCommentReply" href="#ByteAPI.ByteAPI.ByteAPI.postCommentReply">postCommentReply</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.rebytePost" href="#ByteAPI.ByteAPI.ByteAPI.rebytePost">rebytePost</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.similarPosts" href="#ByteAPI.ByteAPI.ByteAPI.similarPosts">similarPosts</a></code></li>
-<li><code><a title="ByteAPI.ByteAPI.ByteAPI.unfollow" href="#ByteAPI.ByteAPI.ByteAPI.unfollow">unfollow</a></code></li>
-<li><code><a title="ByteAPI.ByteAPI.ByteAPI.userPosts" href="#ByteAPI.ByteAPI.ByteAPI.userPosts">userPosts</a></code></li>
-<li><code><a title="ByteAPI.ByteAPI.ByteAPI.userRebytes" href="#ByteAPI.ByteAPI.ByteAPI.userRebytes">userRebytes</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.user_id" href="#ByteAPI.ByteAPI.ByteAPI.user_id">user_id</a></code></li>
 <li><code><a title="ByteAPI.ByteAPI.ByteAPI.username" href="#ByteAPI.ByteAPI.ByteAPI.username">username</a></code></li>
 </ul>
