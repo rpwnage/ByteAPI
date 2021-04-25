@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
         name='Byte.py',
-        version='0.1',
+        version='0.2',
         description='A Python API Wrapper to interact with with the SocialMedia platform Byte.co',
         long_description="""
-        # Byte.py
+        # ByteAPI
         Byte.py is a python wrapper for the inofficial API that runs the SocialMedia platform Byte.co. This is pretty basic as of now, and will be updated in future releases. For more information about this package's capabilities please refer to the documentation.
         # Basic usage
         The following snippet is an example on how to create a new Byte.py client instance and fetch the username of the logged-in user.
@@ -17,7 +17,7 @@ setup(
         ```
         """,
         long_description_content_type='text/markdown',
-        url='https://github.com/RPwnage/Byte.py',
+        url='https://rpwnage.github.io/ByteAPI/',
         author='rpwnage',
         author_email='rpwnage@protonmail.com',
         license='MIT',
