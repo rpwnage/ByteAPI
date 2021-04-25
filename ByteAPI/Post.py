@@ -26,8 +26,6 @@ class PublicPost:
             self.author = PublicProfile(self.__rsess, self.post_data["authorID"], self.__token)
             self.curation_allowed = bool(self.post_data["allowCuration"])
             self.remix_allowed = bool(self.post_data["allowRemix"])
-            self.category = str(self.post_data["category"])
-            self.community = Community(self.__rsess, self.post_data["community"]["id"], self.__token)
             self.date = int(self.post_data["date"])
             self.video_source = str(self.post_data["videoSrc"])
             self.thumbnail_source = str(self.post_data["thumbSrc"])
@@ -40,8 +38,36 @@ class PublicPost:
             self.share_url = str(self.post_data["shareURL"])
             self.animated_thumbnail_source = str(self.post_data["animatedThumbnail"])
             self.watermarked_video_source = str(self.post_data["watermarkedVideo"])
-            self.media = 
+            self.media = PostMedia(self.__rsess, self.id, self.__token)
+            if "category" in self.post_data:
+                self.category = str(self.post_data["category"])
+                self.community = Community(self.__rsess, self.post_data["community"]["id"], self.__token)
         except:
             raise Exception("Unable to find post (ID: "+str(post_id)+")")
 
-    def 
+    def like(self):
+        """Like the post"""
+        res = self.__rsess.put(("https://api.byte.co/post/id/"+str(self.id)+"/feedback/like"), headers={ "Authorization": self.__token }, json={ "_context": { "isZenMode": False }, "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "postID": str(self.id) }).json()
+        if "success" in res:
+            if res["success"] == 1:
+                self.__init__(self.__rsess, self.id, self.__token)
+
+    def dislike(self):
+        """Dislike the post"""
+        res = self.__rsess.delete(("https://api.byte.co/post/id/"+str(self.id)+"/feedback/like"), headers={ "Authorization": self.__token }, json={ "_context": { "isZenMode": False }, "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "postID": str(self.id) }).json()
+        if "success" in res:
+            if res["success"] == 1:
+                self.__init__(self.__rsess, self.id, self.__token)
+
+    def similar(self):
+        """Find similar posts"""
+        res = self.__rsess.post("https://api.byte.co/post/id/"+str(self.id)+"/similar", headers={ "Authorization": self.__token }, json={ "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}" })
+        print(res.json()["data"])
+
+    def rebyte(self):
+        """Rebyte the post"""
+        res = self.__rsess.post("https://api.byte.co/rebyte", headers={ "Authorization": self.__token }, json={ "postID": str(self.id), "metadata": "{\"source\":\"feed:your_mix::collection:popularThisMonth\"}" }).json()
+        if res["success"] == 0:
+            if res["error"]["code"] == 2002:
+                # Post has been rebyted already
+                return True

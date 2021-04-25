@@ -2,6 +2,7 @@ from __future__ import annotations
 import requests
 import json
 from .PublicProfile import PublicProfile
+from .Post import PublicPost
 
 class AuthenticationError(Exception):
     def __init__(self, token):
@@ -58,31 +59,15 @@ class ByteAPI:
         handleResponseError(self, res)
         return res.json()["data"]
 
-    def likePost(self, post_id):
-        """Like a given post by post_id"""
-        res = self.rsession.put(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/like"), headers={ "Authorization": self.token }, json={ "_context": { "isZenMode": False }, "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "postID": str(post_id) })
-        return handleResponseError(self, res)
-
-    def dislikePost(self, post_id):
-        """Dislike a given post by post_id"""
-        res = self.rsession.delete(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/like"), headers={ "Authorization": self.token }, json={ "postID": str(post_id) })
-        return handleResponseError(self, res)
-
-    def similarPosts(self, post_id):
-        """Fetch posts similar to a existing post by post_id"""
-        res = self.rsession.post("https://api.byte.co/post/id/"+str(post_id)+"/similar", headers={ "Authorization": self.token }, json={ "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}" })
-        handleResponseError(self, res)
-        return res.json()["data"]
-
-    def rebytePost(self, post_id):
-        """Rebyte a post by post_id"""
-        res = self.rsession.post("https://api.byte.co/rebyte", headers={ "Authorization": self.token }, json={ "postID": str(post_id), "metadata": "{\"source\":\"feed:your_mix::collection:popularThisMonth\"}" })
-        return handleResponseError(self, res)
-
-    def findAccount(self, account_id) -> PublicProfile:
-        """Get information about a account by account_id"""
+    def findAccount(self, account_id: str) -> PublicProfile:
+        """Get a `PublicProfile` object by account_id"""
         profile = PublicProfile(self.rsession, account_id, self.token)
         return profile
+
+    def findPost(self, post_id: str) -> PublicPost:
+        """Get a `PublicPost` object by post_id"""
+        post = PublicPost(self.rsession, post_id, self.token)
+        return post
 
     def changeUsername(self, username: str):
         """Change your own username"""
