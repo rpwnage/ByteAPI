@@ -1,15 +1,37 @@
 import requests
 import json
-from .errors import *
 
+class AuthenticationError(Exception):
+    def __init__(self, token):
+        super().__init__("Unable to authenticate with given token ("+str(token)+")")
+
+class APIError(Exception):
+    def __init__(self, message):
+        super().__init__(str(message))
+
+def handleResponseError(self, response):
+    """
+    This function checks the respoonse of a API request for potential errors
+    """
+    if response.status_code == 401:
+        raise AuthenticationError(self.token)
+    if "success" in response.json():
+        if int(response.json()["success"]) != 1:
+            raise APIError(str(response.json()["error"]["message"]))
+        if int(response.json()["success"]) == 1:
+            return True
+    return True
 
 class ByteAPI:
     def __init__(self, token):
+        """Create a new ByteAPI Client instance from `token`"""
         self.token = token
         self.rsession = requests.Session()
         self.user_info = self.__accountInfo()
         self.username = self.user_info["username"]
+        """Username of the Authenticated user"""
         self.user_id = self.user_info["id"]
+        """UserID of the Authenticated user"""
         self.following = self.__accountFollowing()
         self.following_count = self.user_info["followingCount"]
         self.follower = self.__accountFollowing()
@@ -35,82 +57,102 @@ class ByteAPI:
         return res.json()["data"]
 
     def likePost(self, post_id):
+        """Like a given post by post_id"""
         res = self.rsession.put(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/like"), headers={ "Authorization": self.token }, json={ "_context": { "isZenMode": False }, "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "postID": str(post_id) })
         return handleResponseError(self, res)
 
     def dislikePost(self, post_id):
+        """Dislike a given post by post_id"""
         res = self.rsession.delete(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/like"), headers={ "Authorization": self.token }, json={ "postID": str(post_id) })
         return handleResponseError(self, res)
 
     def similarPosts(self, post_id):
+        """Fetch posts similar to a existing post by post_id"""
         res = self.rsession.post("https://api.byte.co/post/id/"+str(post_id)+"/similar", headers={ "Authorization": self.token }, json={ "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}" })
         handleResponseError(self, res)
         return res.json()["data"]
 
     def rebytePost(self, post_id):
+        """Rebyte a post by post_id"""
         res = self.rsession.post("https://api.byte.co/rebyte", headers={ "Authorization": self.token }, json={ "postID": str(post_id), "metadata": "{\"source\":\"feed:your_mix::collection:popularThisMonth\"}" })
         return handleResponseError(self, res)
 
     def account(self, account_id):
+        """Get information about a account by account_id"""
         res = self.rsession.get("https://api.byte.co/account/id/" + str(account_id), headers={ "Authorization": self.token })
         handleResponseError(self, res)
         return res.json()["data"]
 
     def follow(self, account_id):
+        """Follow a account by account_id"""
         res = self.rsession.put("https://api.byte.co/account/id/"+str(account_id)+"/follow", headers={ "Authorization": self.token })
         return handleResponseError(self, res)
 
     def unfollow(self, account_id):
+        """Unfollow a account by account_id"""
         res = self.rsession.delete("https://api.byte.co/account/id/"+str(account_id)+"/follow", headers={ "Authorization": self.token })
         return handleResponseError(self, res) 
 
     def userRebytes(self, account_id):
+        """Get the Rebytes of a user by account_id""" 
         res = self.rsession.get(("https://api.byte.co/account/id/"+str(account_id)+"/rebytes"), headers={ "Authorization": self.token })
         handleResponseError(self, res)
         return res.json()["data"]
 
     def userPosts(self, account_id):
+        """Get the Posts of a user by account_id""" 
         res = self.rsession.get(("https://api.byte.co/account/id/"+str(account_id)+"/posts"), headers={ "Authorization": self.token })
         handleResponseError(self, res)
         return res.json()["data"]
 
     def changeUsername(self, username):
+        """Change your own username"""
         res = self.rsession.put("https://api.byte.co/account/me", headers={ "Authorization": self.token }, json={ "username": str(username) })
         return handleResponseError(self, res)
 
     def changeDisplayname(self, display_name):
+        """Change your own displayname"""
         res = self.rsession.put("https://api.byte.co/account/me", headers={ "Authorization": self.token }, json={ "displayName": str(display_name) })
         return handleResponseError(self, res)
 
     def changeColorScheme(self, color_scheme):
+        """
+        Change your profiles color scheme. `color_scheme` has to be one of the existing color schemes which can be fetched with `colorSchemes(self)`
+        """
         if int(color_scheme) in range(0, len(self.colorSchemes()["colors"])):
             res = self.rsession.put("https://api.byte.co/account/me", headers={ "Authorization": self.token }, json={ "colorScheme": int(color_scheme) })
             return handleResponseError(self, res)
         raise APIError("Unknown Color scheme ("+str(color_scheme)+")")
 
     def colorSchemes(self):
+        """Get a list of available color schemes which can be used to set your user profiles color scheme."""
         res = self.rsession.get("https://api.byte.co/account/me/colors", headers={ "Authorization": self.token })
         handleResponseError(self, res)
         return res.json()["data"]
 
     def postComment(self, post_id, text):
+        """Post a comment under a post by post_id with the contents of text"""
         res = self.rsession.post(("https://api.byte.co/post/id/"+str(post_id)+"/feedback/comment"), headers={ "Authorization": self.token }, json={ "postID": str(post_id), "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "body": str(text)})
         handleResponseError(self, res)
         return res.json()["data"]
 
     def deleteComment(self, comment_id):
+        """Delete a existing comment by comment_id"""
         res = self.rsession.post(("https://api.byte.co/feedback/comment/id/" + str(comment_id)), headers={ "Authorization": self.token }, json={ "commentID": str(comment_id) })
         return handleResponseError(self, res)
 
     def likeComment(self, comment_id):
+        """Like a comment by comment_id"""
         res = self.rsession.put(("https://api.byte.co/feedback/comment/id/"+str(comment_id)+"/feedback/like"), headers={ "Authorization": self.token })
         return handleResponseError(self, res)
 
     def dislikeComment(self, comment_id):
+        """Dislike a comment by comment_id"""
         res = self.rsession.delete(("https://api.byte.co/feedback/comment/id/"+str(comment_id)+"/feedback/like"), headers={ "Authorization": self.token })
         return handleResponseError(self, res)
 
     def postCommentReply(self, comment_id, text):
+        """Reply to a existing comment by comment_id"""
         res = self.rsession.post(("https://api.byte.co/feedback/comment/id/"+str(comment_id)+"/feedback/comment"), headers={ "Authorization": self.token }, json={ "postID": str(comment_id).split("-")[0], "metadata": "{\"source\":\"feed:your_mix::collection:popularNow\"}", "body": str(text)})
         handleResponseError(self, res)
         return res.json()["data"]
