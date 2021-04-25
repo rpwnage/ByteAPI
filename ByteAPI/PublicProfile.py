@@ -12,12 +12,17 @@ class PublicProfile():
             """Username of the target user"""
             self.display_name = self.user_data["displayName"]
             """Displayname of the target user"""
-            self.avatar_url = self.user_data["avatarURL"]
-            self.bio = self.user_data["bio"]
-            self.is_following = self.user_data["isFollowing"]
-            self.is_followed = self.user_data["isFollowed"]
-            self.is_blocked = self.user_data["isBlocked"]
-            self.can_message = self.user_data["canMessage"]
+            if "avatarURL" in self.user_data:
+                self.avatar_url = self.user_data["avatarURL"]
+                """URL to the users avatar (if exists)"""
+            if "bio" in self.user_data:
+                self.bio = self.user_data["bio"]
+                """Biography of the user (if exists)"""
+            if "preferences" not in self.user_data:
+                self.is_following = self.user_data["isFollowing"]
+                self.is_followed = self.user_data["isFollowed"]
+                self.is_blocked = self.user_data["isBlocked"]
+                self.can_message = self.user_data["canMessage"]
         except:
             raise Exception("Unable to find user (ID: "+str(user_id)+")")
 

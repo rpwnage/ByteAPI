@@ -1,8 +1,8 @@
 from __future__ import annotations
 import requests
 import json
-from .PublicProfile import PublicProfile
-from .Post import PublicPost
+from ByteAPI.PublicProfile import PublicProfile
+from ByteAPI.Post import PublicPost
 
 class AuthenticationError(Exception):
     def __init__(self, token):
