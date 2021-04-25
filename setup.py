@@ -15,6 +15,8 @@ setup(
         byteClient = ByteAPI(<Your Token>)
         print(byteClient.username)
         ```
+        # Documentation
+        for more information on how to use this module, please refer to the [Documentation](https://rpwnage.github.io/ByteAPI/)
         """,
         long_description_content_type='text/markdown',
         url='https://rpwnage.github.io/ByteAPI/',
